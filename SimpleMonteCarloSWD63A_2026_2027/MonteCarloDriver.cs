@@ -35,5 +35,41 @@ public class MonteCarloDriver
         return _results.Average();  // Mean
     }
 
-    // TODO: Add some methods to analyse the results in _results
+    public double EstimateVariance()
+    {
+        double mu_estimate = EstimateExpectedValue();
+
+        return
+            _results!.Sum(
+                x => Math.Pow(x - mu_estimate, 2.0)) /
+                (_results!.Count - 1);
+    }
+
+    public double EstimateStandardDeviation()
+    {
+        return Math.Sqrt(EstimateVariance());
+    }
+
+    public double RMSE(double? standardDeviation = null)
+    {
+        if (_results == null || _results.Count == 0)
+        {
+            throw new InvalidOperationException("To estimate the expected value, you need to run some simulations");
+        }
+
+        standardDeviation ??= EstimateStandardDeviation();
+
+        return standardDeviation.Value / Math.Sqrt(_results.Count);
+    }
+
+    public int RequiredSimulations(double maxRMSE, 
+                                   double? standardDeviation = null)
+    {
+        // If standard deviation is not passed as a parameter, estimate it from _results
+        standardDeviation ??= EstimateStandardDeviation();
+
+        return (int)Math.Ceiling(
+                Math.Pow(standardDeviation.Value, 2.0) /
+                Math.Pow(maxRMSE, 2.0));
+    }
 }
